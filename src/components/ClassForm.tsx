@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FormEvent } from 'react';
 
 import {
     FormGroup,
@@ -7,67 +7,71 @@ import {
     BaseValidator
 } from 'ms-react-reactive-form';
 
-class ClassForm extends React.Component {
-    constructor(props) {
-        super(props);
+type Props = {};
 
-        this.state = {
-            loginForm: new FormGroup({
-                email: new FormControl("", [Validators.required()]),
-                password: new FormControl("", [Validators.required(), Validators.pattern(/[0-9]/)]),
-                age: new FormControl("", [Validators.min(2), Validators.max(20)])
-            })
-        };
+class ClassForm extends React.Component {
+    state = {
+        loginForm: new FormGroup({
+            email: new FormControl("", [Validators.required()]),
+            password: new FormControl("", [Validators.required(), Validators.pattern(/[0-9]/)]),
+            age: new FormControl("", [Validators.min(2), Validators.max(20)])
+        })
+    };
+
+    constructor(props: Props) {
+        super(props);
     }
 
-    save = (event) => {
+    save = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
         const { loginForm } = this.state;
 
         let validate = new BaseValidator(loginForm);
-        let res = validate.result(validate.form.controls);
-        this.updateForm(res.form.controls);
+        validate.analysis()
+            .then(controls => {
+                let res = validate.result(controls);
+                this.updateForm(res.form);
 
-
-        if (res.form.validity) {
-            console.log(res.payload);
-        } else {
-            console.log(res.form)
-        }
+                if (res.form.validity) {
+                    console.log(res.payload);
+                } else {
+                    console.log(res.form)
+                }
+            });
     };
 
-    changeHandler = (event) => {
+    changeHandler = (event: FormEvent<HTMLInputElement>) => {
         const { loginForm } = this.state;
-        const { name, value } = event.target;
+        const { name, value } = event.currentTarget;
         loginForm.controls[name].setValue(value);
 
-        this.updateForm(loginForm.controls);
+        this.updateForm(loginForm);
     };
 
     resetPassword = () => {
         const { loginForm } = this.state;
         loginForm.controls.password.setValue("");
-        this.updateForm(loginForm.controls);
+        this.updateForm(loginForm);
     };
 
     removeAgeValidators = () => {
         const { loginForm } = this.state;
-        loginForm.controls.age.removeValidators([Validators.min(), Validators.max(), Validators.required()]);
-        this.updateForm(loginForm.controls);
+        loginForm.controls.age.removeValidators([Validators.min, Validators.max, Validators.required()]);
+        this.updateForm(loginForm);
     };
 
     setAgeToRequired = () => {
         const { loginForm } = this.state;
         loginForm.controls.age.setValidators([Validators.required()]);
-        this.updateForm(loginForm.controls);
+        this.updateForm(loginForm);
     };
 
-    updateForm = (controls) => {
+    updateForm = (form: FormGroup) => {
         this.setState(prev => {
             return {
                 ...prev,
-                loginForm: new FormGroup(controls)
+                loginForm: new FormGroup({...form.controls})
             }
         });
     };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { FC, FormEvent, useState } from 'react';
 
 import {
     FormGroup,
@@ -7,54 +7,58 @@ import {
     BaseValidator
 } from 'ms-react-reactive-form';
 
-const FunctionalForm = () => {
-    const form = new FormGroup({
+type Props = {};
+
+const FunctionalForm: FC<Props> = (props: Props) => {
+    const form: FormGroup = new FormGroup({
         email: new FormControl("", [Validators.required()]),
         password: new FormControl("", [Validators.required(), Validators.pattern(/[0-9]/)]),
         age: new FormControl("", [Validators.min(2), Validators.max(20)])
     });
 
-    const [loginForm, updateLoginForm] = useState(form);
+    const [loginForm, updateLoginForm] = useState<FormGroup>(form);
 
-    const save = (event) => {
+    const save = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
         let validate = new BaseValidator(loginForm);
-        let res = validate.result(validate.form.controls);
-        updateForm(res.form.controls);
+        validate.analysis()
+            .then(controls => {
+                let res = validate.result(controls);
+                updateForm(res.form);
 
-
-        if (res.form.validity) {
-            console.log(res.payload);
-        } else {
-            console.log(res.form)
-        }
+                if (res.form.validity) {
+                    console.log(res.payload);
+                } else {
+                    console.log(res.form)
+                }
+            });
     };
 
-    const changeHandler = (event) => {
-        const { name, value } = event.target;
+    const changeHandler = (event: FormEvent<HTMLInputElement>) => {
+        const { name, value } = event.currentTarget;
         loginForm.controls[name].setValue(value);
 
-        updateForm(loginForm.controls);
+        updateForm(loginForm);
     };
 
     const resetPassword = () => {
         loginForm.controls.password.setValue("");
-        updateForm(loginForm.controls);
+        updateForm(loginForm);
     };
 
     const removeAgeValidators = () => {
-        loginForm.controls.age.removeValidators([Validators.min(), Validators.max(), Validators.required()]);
-        updateForm(loginForm.controls);
+        loginForm.controls.age.removeValidators([Validators.min, Validators.max, Validators.required]);
+        updateForm(loginForm);
     };
 
     const setAgeToRequired = () => {
         loginForm.controls.age.setValidators([Validators.required()]);
-        updateForm(loginForm.controls);
+        updateForm(loginForm);
     };
 
-    const updateForm = (controls) => {
-        let update = new FormGroup(controls);
+    const updateForm = (form: FormGroup) => {
+        let update = new FormGroup(form.controls);
         updateLoginForm(update);
     };
 
@@ -67,7 +71,7 @@ const FunctionalForm = () => {
                     id="email"
                     placeholder="email"
                     value={loginForm.controls.email.value}
-                    onChange={changeHandler}
+                    onChange={(event: FormEvent<HTMLInputElement>) => changeHandler(event)}
                 />
                 {
                     loginForm.controls.email.validity === false &&
@@ -81,7 +85,7 @@ const FunctionalForm = () => {
                     id="password"
                     placeholder="password"
                     value={loginForm.controls.password.value}
-                    onChange={changeHandler}
+                    onChange={(event: FormEvent<HTMLInputElement>) => changeHandler(event)}
                 />
 
                 {
@@ -106,7 +110,7 @@ const FunctionalForm = () => {
                     id="age"
                     placeholder="age"
                     value={loginForm.controls.age.value}
-                    onChange={changeHandler}
+                    onChange={(event: FormEvent<HTMLInputElement>) => changeHandler(event)}
                 />
                 {
                     loginForm.controls.age.validity === false &&
